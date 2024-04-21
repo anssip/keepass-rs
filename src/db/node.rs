@@ -142,8 +142,7 @@ pub trait Node: as_any::AsAny + std::fmt::Debug {
     fn set_icon_id(&mut self, icon_id: Option<IconId>);
     fn get_custom_icon_uuid(&self) -> Option<Uuid>;
     fn get_times(&self) -> &Times;
-    fn get_time(&self, key: &str) -> Option<&chrono::NaiveDateTime>;
-    fn get_expiry_time(&self) -> Option<&chrono::NaiveDateTime>;
+    fn get_times_mut(&mut self) -> &mut Times;
     fn get_parent(&self) -> Option<Uuid>;
     fn set_parent(&mut self, parent: Option<Uuid>);
 }

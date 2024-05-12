@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use base32;
 use std::time::{Duration, SystemTime, SystemTimeError, UNIX_EPOCH};
 use thiserror::Error;
@@ -19,7 +20,7 @@ impl std::str::FromStr for TOTPAlgorithm {
     type Err = TOTPError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
+        match s.to_uppercase().as_str() {
             "SHA1" => Ok(TOTPAlgorithm::Sha1),
             "SHA256" => Ok(TOTPAlgorithm::Sha256),
             "SHA512" => Ok(TOTPAlgorithm::Sha512),
@@ -28,15 +29,25 @@ impl std::str::FromStr for TOTPAlgorithm {
     }
 }
 
+impl Display for TOTPAlgorithm {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            TOTPAlgorithm::Sha1 => write!(f, "SHA1"),
+            TOTPAlgorithm::Sha256 => write!(f, "SHA256"),
+            TOTPAlgorithm::Sha512 => write!(f, "SHA512"),
+        }
+    }
+}
+
 /// Time-based one time password settings
 #[derive(Debug, PartialEq, Eq)]
 pub struct TOTP {
-    label: String,
-    secret: Vec<u8>,
-    issuer: String,
-    period: u64,
-    digits: u32,
-    algorithm: TOTPAlgorithm,
+    pub label: String,
+    pub secret: Vec<u8>,
+    pub issuer: String,
+    pub period: u64,
+    pub digits: u32,
+    pub algorithm: TOTPAlgorithm,
 }
 
 /// A generated one time password
@@ -46,7 +57,7 @@ pub struct OTPCode {
     pub period: Duration,
 }
 
-impl std::fmt::Display for OTPCode {
+impl Display for OTPCode {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(
             f,
@@ -132,6 +143,16 @@ impl std::str::FromStr for TOTP {
     }
 }
 
+impl Display for TOTP {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
+            "otpauth://totp/{}?secret={}&period={}&digits={}&issuer={}&algorithm={:?}",
+            self.label, base32::encode(base32::Alphabet::RFC4648 { padding: true }, &self.secret), self.period, self.digits, self.issuer, self.algorithm
+        )
+    }
+}
+
 impl TOTP {
     /// Get the one-time code for a specific unix timestamp
     pub fn value_at(&self, time: u64) -> OTPCode {
@@ -154,6 +175,10 @@ impl TOTP {
     pub fn value_now(&self) -> Result<OTPCode, SystemTimeError> {
         let time: u64 = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
         Ok(self.value_at(time))
+    }
+
+    pub fn get_secret(&self) -> String {
+        base32::encode(base32::Alphabet::RFC4648 { padding: true }, &self.secret)
     }
 }
 

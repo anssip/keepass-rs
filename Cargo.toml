@@ -7,8 +7,12 @@ homepage = "https://github.com/anssip/keepass-rs"
 repository = "https://github.com/anssip/keepass-rs"
 documentation = "https://docs.rs/keepass-ng"
 
-version = "0.0.2"
-authors = ["Stefan Seemayer <stefan@seemayer.de>", "ssrlive", "Anssi Piirainen <iki@iki.fi>"]
+version = "0.0.3"
+authors = [
+    "Stefan Seemayer <stefan@seemayer.de>",
+    "ssrlive",
+    "Anssi Piirainen <iki@iki.fi>",
+]
 license = "MIT"
 
 readme = "README.md"
@@ -31,7 +35,11 @@ block-modes = "0.9"
 byteorder = "1"
 cbc = "0.1"
 chacha20 = "0.9"
-chrono = { version = "0.4.23", default-features = false, features = ["serde", "clock", "std"] }
+chrono = { version = "0.4.23", default-features = false, features = [
+    "serde",
+    "clock",
+    "std",
+] }
 cipher = { version = "0.4", features = ["std"] }
 clap = { version = "4", optional = true, features = ["derive"] }
 erased-serde = "0.3"

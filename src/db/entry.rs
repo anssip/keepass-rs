@@ -203,7 +203,7 @@ impl Entry {
 
     pub(crate) fn entry_replaced_with(entry: &NodePtr, other: &NodePtr) -> Option<()> {
         let mut success = false;
-        if let Some(mut entry) = entry.borrow_mut().as_any_mut().downcast_mut::<Entry>() {
+        if let Some(entry) = entry.borrow_mut().as_any_mut().downcast_mut::<Entry>() {
             if let Some(other) = other.borrow().as_any().downcast_ref::<Entry>() {
                 entry.uuid = other.uuid;
                 entry.fields = other.fields.clone();

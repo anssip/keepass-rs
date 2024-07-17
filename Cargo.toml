@@ -7,7 +7,7 @@ homepage = "https://github.com/anssip/keepass-rs"
 repository = "https://github.com/anssip/keepass-rs"
 documentation = "https://docs.rs/keepass-ng"
 
-version = "0.0.3"
+version = "0.0.4"
 authors = [
     "Stefan Seemayer <stefan@seemayer.de>",
     "ssrlive",

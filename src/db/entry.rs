@@ -356,7 +356,7 @@ impl<'a> Entry {
             sanitized_entry.times.set_last_modification(Some(NaiveDateTime::default()));
             sanitized_entry.history.take();
 
-            let mut last_history_entry = history.entries.get(0).unwrap().clone();
+            let mut last_history_entry = history.entries.first().unwrap().clone();
             last_history_entry.times.set_last_modification(Some(NaiveDateTime::default()));
             last_history_entry.history.take();
 
@@ -582,7 +582,7 @@ mod entry_tests {
         assert_eq!(entry.history.as_ref().unwrap().entries.len(), 3);
         assert_eq!(entry.times.get_last_modification().unwrap(), last_modification_time);
 
-        let last_history_entry = entry.history.as_ref().unwrap().entries.get(0).unwrap();
+        let last_history_entry = entry.history.as_ref().unwrap().entries.first().unwrap();
         assert_eq!(last_history_entry.get_title().unwrap(), "second title");
 
         for history_entry in &entry.history.unwrap().entries {

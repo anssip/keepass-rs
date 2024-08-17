@@ -39,7 +39,7 @@ pub(crate) fn parse_kdbx4(data: &[u8], key_elements: &[Vec<u8>]) -> Result<Datab
     let db = Database {
         config,
         header_attachments,
-        root: rc_refcell_node!(database_content.root.group),
+        root: rc_refcell_node!(database_content.root.group).into(),
         deleted_objects: database_content.root.deleted_objects,
         meta: database_content.meta,
     };
@@ -82,7 +82,7 @@ pub(crate) fn decrypt_kdbx4(
 
     // verify credentials
     let hmac_key = crypt::calculate_sha512(&[&outer_header.master_seed, &transformed_key, &hmac_block_stream::HMAC_KEY_END]);
-    let header_hmac_key = hmac_block_stream::get_hmac_block_key(u64::max_value(), &hmac_key);
+    let header_hmac_key = hmac_block_stream::get_hmac_block_key(u64::MAX, &hmac_key);
     if header_hmac != crypt::calculate_hmac(&[header_data], &header_hmac_key)?.as_slice() {
         return Err(DatabaseKeyError::IncorrectKey.into());
     }

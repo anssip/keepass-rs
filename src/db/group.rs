@@ -74,7 +74,7 @@ pub struct Group {
     pub(crate) custom_icon_uuid: Option<Uuid>,
 
     /// The list of child nodes (Groups or Entries)
-    pub(crate) children: Vec<NodePtr>,
+    pub(crate) children: Vec<SerializableNodePtr>,
 
     /// The list of time fields for this group
     pub(crate) times: Times,
@@ -156,7 +156,7 @@ impl Node for Group {
             .map(|child| {
                 let child = child.borrow().duplicate();
                 child.borrow_mut().set_parent(Some(new_group.uuid));
-                child
+                child.into()
             })
             .collect();
         rc_refcell_node!(new_group)
@@ -224,7 +224,7 @@ impl Group {
     }
 
     pub fn get_children(&self) -> Vec<NodePtr> {
-        self.children.clone()
+        self.children.iter().map(|c| c.into()).collect()
     }
 
     fn compare_children(&self, other: &Self) -> bool {
@@ -255,9 +255,9 @@ impl Group {
     pub fn add_child(&mut self, child: NodePtr, index: usize) {
         child.borrow_mut().set_parent(Some(self.get_uuid()));
         if index < self.children.len() {
-            self.children.insert(index, child);
+            self.children.insert(index, child.into());
         } else {
-            self.children.push(child);
+            self.children.push(child.into());
         }
     }
 
@@ -300,7 +300,7 @@ impl Group {
         let mut response: Vec<NodePtr> = vec![];
         for node in &self.children {
             if node_is_entry(node) {
-                response.push(node.clone());
+                response.push(node.into());
             }
         }
         response
@@ -310,7 +310,7 @@ impl Group {
         let mut response: Vec<NodePtr> = vec![];
         for node in &self.children {
             if node_is_group(node) {
-                response.push(node.clone());
+                response.push(node.into());
             }
         }
         response
@@ -392,7 +392,7 @@ impl Group {
             uuid,
             group.borrow().get_title().unwrap_or("No title")
         );
-        for node in group_get_children(&group).unwrap_or(vec![]) {
+        for node in group_get_children(&group).unwrap_or_default() {
             if node_is_entry(&node) {
                 let node_uuid = node.borrow().get_uuid();
                 println!("Saw entry {node_uuid}");
@@ -449,7 +449,7 @@ impl Group {
         let next_location = &remaining_location[0];
 
         println!("Searching for group {} {:?}", next_location.name, next_location.uuid);
-        for node in group_get_children(parent).unwrap_or(vec![]) {
+        for node in group_get_children(parent).unwrap_or_default() {
             if node_is_group(&node) {
                 if node.borrow().get_uuid() != next_location.uuid {
                     continue;
@@ -600,7 +600,7 @@ impl Group {
 
         for node in &self.children {
             if node_is_entry(node) {
-                response.push((node.clone(), new_location.clone()));
+                response.push((node.into(), new_location.clone()));
             } else if let Some(g) = node.borrow().as_any().downcast_ref::<Group>() {
                 let mut new_entries = g.get_all_entries(&new_location);
                 response.append(&mut new_entries);
@@ -719,7 +719,7 @@ mod group_tests {
             .unwrap()
             .get_all_entries(&vec![]);
         assert_eq!(destination_entries.len(), 1);
-        let (_created_entry, created_entry_location) = destination_entries.get(0).unwrap();
+        let (_created_entry, created_entry_location) = destination_entries.first().unwrap();
         println!("{:?}", created_entry_location);
         assert_eq!(created_entry_location.len(), 2);
     }
@@ -746,7 +746,7 @@ mod group_tests {
             let destination_group = destination_group.as_any().downcast_ref::<Group>().unwrap();
             let destination_entries = destination_group.get_all_entries(&vec![]);
             assert_eq!(destination_entries.len(), 1);
-            let (_, created_entry_location) = destination_entries.get(0).unwrap();
+            let (_, created_entry_location) = destination_entries.first().unwrap();
             assert_eq!(created_entry_location.len(), 2);
         }
     }
@@ -821,7 +821,7 @@ mod group_tests {
             .unwrap()
             .get_all_entries(&vec![]);
         assert_eq!(destination_entries.len(), 1);
-        let (_moved_entry, moved_entry_location) = destination_entries.get(0).unwrap();
+        let (_moved_entry, moved_entry_location) = destination_entries.first().unwrap();
         assert_eq!(moved_entry_location.len(), 2);
         assert_eq!(moved_entry_location[0].name, "group1".to_string());
         assert_eq!(moved_entry_location[1].name, "subgroup2".to_string());
@@ -866,7 +866,7 @@ mod group_tests {
             .unwrap()
             .get_all_entries(&vec![]);
         assert_eq!(destination_entries.len(), 1);
-        let (_, created_entry_location) = destination_entries.get(0).unwrap();
+        let (_, created_entry_location) = destination_entries.first().unwrap();
         assert_eq!(created_entry_location.len(), 2);
         assert_eq!(created_entry_location[0].name, "group1".to_string());
         assert_eq!(created_entry_location[1].name, "subgroup2".to_string());

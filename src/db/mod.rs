@@ -47,7 +47,7 @@ pub struct Database {
     pub header_attachments: Vec<HeaderAttachment>,
 
     /// Root node of the KeePass database
-    pub root: NodePtr,
+    pub root: SerializableNodePtr,
 
     /// References to previously-deleted objects
     pub deleted_objects: DeletedObjects,
@@ -123,8 +123,7 @@ impl Database {
 
     /// Get the version of a database without decrypting it
     pub fn get_version(source: &mut dyn std::io::Read) -> Result<DatabaseVersion, DatabaseIntegrityError> {
-        let mut data = Vec::new();
-        data.resize(DatabaseVersion::get_version_header_size(), 0);
+        let mut data = vec![0; DatabaseVersion::get_version_header_size()];
         _ = source.read(&mut data)?;
         DatabaseVersion::parse(data.as_ref())
     }
@@ -134,7 +133,7 @@ impl Database {
         Self {
             config,
             header_attachments: Vec::new(),
-            root: rc_refcell_node!(Group::new("Root")),
+            root: rc_refcell_node!(Group::new("Root")).into(),
             deleted_objects: DeletedObjects::default(),
             meta: Meta::new(),
         }
@@ -229,7 +228,7 @@ impl Database {
     fn create_new_node<T: Node + Default>(&self, parent: Uuid, index: usize) -> crate::Result<NodePtr> {
         let new_node = rc_refcell_node!(T::default());
         let parent = search_node_by_uuid_with_specific_type::<Group>(&self.root, parent)
-            .or_else(|| Some(self.root.clone()))
+            .or_else(|| Some(self.root.clone().into()))
             .ok_or("No parent node")?;
         if let Some(parent) = parent.borrow_mut().as_any_mut().downcast_mut::<Group>() {
             parent.add_child(new_node.clone(), index);
@@ -343,12 +342,12 @@ impl Times {
     // Returns the current time, without the nanoseconds since
     // the last leap second.
     pub fn now() -> NaiveDateTime {
-        let now = chrono::Utc::now().naive_utc().timestamp();
-        chrono::NaiveDateTime::from_timestamp_opt(now, 0).unwrap()
+        let now = chrono::Utc::now().naive_utc().and_utc().timestamp();
+        chrono::DateTime::from_timestamp(now, 0).unwrap().naive_utc()
     }
 
     pub fn epoch() -> NaiveDateTime {
-        chrono::NaiveDateTime::from_timestamp_opt(0, 0).unwrap()
+        chrono::DateTime::from_timestamp(0, 0).unwrap().naive_utc()
     }
 
     pub fn new() -> Times {

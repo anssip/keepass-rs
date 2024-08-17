@@ -1,5 +1,5 @@
 mod file_read_tests {
-    use keepass::{
+    use keepass_ng::{
         db::{Database, Entry, Group, Node, NodeIterator, NodePtr},
         error::{DatabaseIntegrityError, DatabaseOpenError},
         group_get_children, DatabaseKey,

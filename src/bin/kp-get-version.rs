@@ -10,12 +10,12 @@ struct Args {
     in_kdbx: String,
 }
 
-pub fn main() -> Result<(), keepass::BoxError> {
+pub fn main() -> Result<(), keepass_ng::BoxError> {
     let args = Args::parse();
 
     let mut source = File::open(args.in_kdbx)?;
 
-    let version = keepass::Database::get_version(&mut source)?;
+    let version = keepass_ng::Database::get_version(&mut source)?;
     println!("{}", version);
     Ok(())
 }

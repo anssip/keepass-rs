@@ -1,5 +1,5 @@
-use std::fmt::Display;
 use base32;
+use std::fmt::Display;
 use std::time::{Duration, SystemTime, SystemTimeError, UNIX_EPOCH};
 use thiserror::Error;
 use totp_lite::{totp_custom, Sha1, Sha256, Sha512};
@@ -148,7 +148,12 @@ impl Display for TOTP {
         write!(
             f,
             "otpauth://totp/{}?secret={}&period={}&digits={}&issuer={}&algorithm={:?}",
-            self.label, base32::encode(base32::Alphabet::RFC4648 { padding: true }, &self.secret), self.period, self.digits, self.issuer, self.algorithm
+            self.label,
+            base32::encode(base32::Alphabet::Rfc4648 { padding: true }, &self.secret),
+            self.period,
+            self.digits,
+            self.issuer,
+            self.algorithm
         )
     }
 }
@@ -178,7 +183,7 @@ impl TOTP {
     }
 
     pub fn get_secret(&self) -> String {
-        base32::encode(base32::Alphabet::RFC4648 { padding: true }, &self.secret)
+        base32::encode(base32::Alphabet::Rfc4648 { padding: true }, &self.secret)
     }
 }
 

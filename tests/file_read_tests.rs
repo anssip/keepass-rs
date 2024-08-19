@@ -362,7 +362,7 @@ mod file_read_tests {
             &mut File::open(path)?,
             DatabaseKey::new()
                 .with_password("demopass")
-                .with_challenge_response_key(keepass::ChallengeResponseKey::LocalChallenge(
+                .with_challenge_response_key(keepass_ng::ChallengeResponseKey::LocalChallenge(
                     "0102030405060708090a0b0c0d0e0f1011121314".to_string(),
                 )),
         )?;
@@ -377,12 +377,12 @@ mod file_read_tests {
     #[cfg(feature = "challenge_response")]
     fn open_kdbx4_with_yubikey_challenge_response_key() -> Result<(), DatabaseOpenError> {
         let path = Path::new("tests/resources/test_db_with_challenge_response_key.kdbx");
-        let yubikey = keepass::ChallengeResponseKey::get_yubikey(None)?;
+        let yubikey = keepass_ng::ChallengeResponseKey::get_yubikey(None)?;
         let db = Database::open(
             &mut File::open(path)?,
             DatabaseKey::new()
                 .with_password("demopass")
-                .with_challenge_response_key(keepass::ChallengeResponseKey::YubikeyChallenge(yubikey, "2".to_string())),
+                .with_challenge_response_key(keepass_ng::ChallengeResponseKey::YubikeyChallenge(yubikey, "2".to_string())),
         )?;
 
         assert_eq!(db.root.borrow().get_title().unwrap(), "Root");

@@ -296,7 +296,7 @@ impl FromXml for AutoTypeAssociation {
                         out.sequence = sequence.map(|s| decode_xml(&s));
                     }
                     _ => {
-                        IgnoreSubfield::from_xml(iterator, inner_cipher)?;
+                        // IgnoreSubfield::from_xml(iterator, inner_cipher)?;
                         // FIXME: this two lines cause error.
                         let sequence = SimpleTag::<Option<String>>::from_xml(iterator, inner_cipher)?.value;
                         out.sequence = sequence.map(|s| decode_xml(&s));

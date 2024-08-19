@@ -4,12 +4,13 @@ use std::time::{Duration, SystemTime, SystemTimeError, UNIX_EPOCH};
 use thiserror::Error;
 use totp_lite::{totp_custom, Sha1, Sha256, Sha512};
 use url::Url;
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 const DEFAULT_PERIOD: u64 = 30;
 const DEFAULT_DIGITS: u32 = 8;
 
 /// Choices of hash algorithm for TOTP
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Zeroize, ZeroizeOnDrop)]
 pub enum TOTPAlgorithm {
     Sha1,
     Sha256,
@@ -40,10 +41,10 @@ impl Display for TOTPAlgorithm {
 }
 
 /// Time-based one time password settings
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Zeroize, ZeroizeOnDrop)]
 pub struct TOTP {
     pub label: String,
-    pub secret: Vec<u8>,
+    secret: Vec<u8>,
     pub issuer: String,
     pub period: u64,
     pub digits: u32,
@@ -231,6 +232,17 @@ mod kdbx4_otp_tests {
         };
 
         assert_eq!(otp_str.parse::<TOTP>()?, expected);
+
+        Ok(())
+    }
+
+    #[test]
+    fn totp_get_secret() -> Result<(), TOTPError> {
+        let otp_str = "otpauth://totp/KeePassXC:none?secret=JBSWY3DPEHPK3PXP&period=30&digits=6&issuer=KeePassXC";
+
+        let otp = otp_str.parse::<TOTP>()?;
+
+        assert_eq!(otp.get_secret(), "JBSWY3DPEHPK3PXP".to_string());
 
         Ok(())
     }

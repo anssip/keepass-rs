@@ -1,8 +1,7 @@
-use super::IgnoreSubfield;
 use crate::{
     crypt::ciphers::Cipher,
     db::{iconid::IconId, AutoType, AutoTypeAssociation, Color, Entry, History, Times, Value},
-    xml_db::parse::{CustomData, FromXml, SimpleTag, SimpleXmlEvent, XmlParseError},
+    xml_db::parse::{bad_event, CustomData, FromXml, IgnoreSubfield, SimpleTag, SimpleXmlEvent, XmlParseError},
 };
 use base64::{engine::general_purpose as base64_engine, Engine as _};
 use secstr::SecStr;
@@ -27,10 +26,7 @@ impl FromXml for Entry {
     ) -> Result<Self::Parses, XmlParseError> {
         let open_tag = iterator.next().ok_or(XmlParseError::Eof)?;
         if !matches!(open_tag, SimpleXmlEvent::Start(ref tag, _) if tag == "Entry") {
-            return Err(XmlParseError::BadEvent {
-                expected: "Open entry tag",
-                event: open_tag,
-            });
+            return Err(bad_event("Open entry tag", open_tag));
         }
 
         let mut out = Entry::default();
@@ -89,17 +85,10 @@ impl FromXml for Entry {
                     "History" => {
                         out.history = Some(History::from_xml(iterator, inner_cipher)?);
                     }
-                    _ => {
-                        IgnoreSubfield::from_xml(iterator, inner_cipher)?;
-                    }
+                    _ => IgnoreSubfield::from_xml(iterator, inner_cipher)?,
                 },
                 SimpleXmlEvent::End(name) if name == "Entry" => break,
-                _ => {
-                    return Err(XmlParseError::BadEvent {
-                        expected: "start tag or close entry",
-                        event: event.clone(),
-                    })
-                }
+                _ => return Err(bad_event("start tag or close entry", event.clone())),
             }
         }
 
@@ -125,10 +114,7 @@ impl FromXml for StringField {
     ) -> Result<Self::Parses, XmlParseError> {
         let open_tag = iterator.next().ok_or(XmlParseError::Eof)?;
         if !matches!(open_tag, SimpleXmlEvent::Start(ref tag, _) if tag == "String") {
-            return Err(XmlParseError::BadEvent {
-                expected: "Open string tag",
-                event: open_tag,
-            });
+            return Err(bad_event("Open string tag", open_tag));
         }
 
         let mut out = StringField::default();
@@ -145,17 +131,10 @@ impl FromXml for StringField {
                             out.value = Some(value);
                         }
                     }
-                    _ => {
-                        IgnoreSubfield::from_xml(iterator, inner_cipher)?;
-                    }
+                    _ => IgnoreSubfield::from_xml(iterator, inner_cipher)?,
                 },
                 SimpleXmlEvent::End(name) if name == "String" => break,
-                _ => {
-                    return Err(XmlParseError::BadEvent {
-                        expected: "start tag or close String",
-                        event: event.clone(),
-                    })
-                }
+                _ => return Err(bad_event("start tag or close String", event.clone())),
             }
         }
 
@@ -182,10 +161,7 @@ impl FromXml for BinaryField {
     ) -> Result<Self::Parses, XmlParseError> {
         let open_tag = iterator.next().ok_or(XmlParseError::Eof)?;
         if !matches!(open_tag, SimpleXmlEvent::Start(ref tag, _) if tag == "Binary") {
-            return Err(XmlParseError::BadEvent {
-                expected: "Open Binary tag",
-                event: open_tag,
-            });
+            return Err(bad_event("Open Binary tag", open_tag));
         }
 
         let key = SimpleTag::<String>::from_xml(iterator, inner_cipher)?.value;
@@ -195,17 +171,11 @@ impl FromXml for BinaryField {
             SimpleXmlEvent::Start(ref name, ref attributes) if name == "Value" => attributes.get("Ref").cloned(),
             _ => None,
         }
-        .ok_or(XmlParseError::BadEvent {
-            expected: "Open Value tag with \"Ref\" attribute",
-            event: value_event,
-        })?;
+        .ok_or(bad_event("Open Value tag with \"Ref\" attribute", value_event))?;
 
         let close_value_tag = iterator.next().ok_or(XmlParseError::Eof)?;
         if !matches!(close_value_tag, SimpleXmlEvent::End(ref tag) if tag == "Value") {
-            return Err(XmlParseError::BadEvent {
-                expected: "Close Value tag",
-                event: close_value_tag,
-            });
+            return Err(bad_event("Close Value tag", close_value_tag));
         }
 
         // no need to check for the correct closing tag - checked by XmlReader
@@ -244,19 +214,13 @@ impl FromXml for Value {
 
                 let close_value_tag = iterator.next().ok_or(XmlParseError::Eof)?;
                 if !matches!(close_value_tag, SimpleXmlEvent::End(ref tag) if tag == "Value") {
-                    return Err(XmlParseError::BadEvent {
-                        expected: "Close Value tag",
-                        event: close_value_tag,
-                    });
+                    return Err(bad_event("Close Value tag", close_value_tag));
                 }
 
                 return Ok(value);
             }
         }
-        Err(XmlParseError::BadEvent {
-            expected: "Open value tag",
-            event: open_tag,
-        })
+        Err(bad_event("Open value tag", open_tag))
     }
 }
 
@@ -269,10 +233,7 @@ impl FromXml for AutoType {
     ) -> Result<Self::Parses, XmlParseError> {
         let open_tag = iterator.next().ok_or(XmlParseError::Eof)?;
         if !matches!(open_tag, SimpleXmlEvent::Start(ref tag, _) if tag == "AutoType") {
-            return Err(XmlParseError::BadEvent {
-                expected: "Open AutoType tag",
-                event: open_tag,
-            });
+            return Err(bad_event("Open AutoType tag", open_tag));
         }
 
         let mut out = AutoType::default();
@@ -295,17 +256,10 @@ impl FromXml for AutoType {
                         let ata = AutoTypeAssociation::from_xml(iterator, inner_cipher)?;
                         out.associations.push(ata);
                     }
-                    _ => {
-                        IgnoreSubfield::from_xml(iterator, inner_cipher)?;
-                    }
+                    _ => IgnoreSubfield::from_xml(iterator, inner_cipher)?,
                 },
                 SimpleXmlEvent::End(name) if name == "AutoType" => break,
-                _ => {
-                    return Err(XmlParseError::BadEvent {
-                        expected: "start tag or close AutoType",
-                        event: event.clone(),
-                    })
-                }
+                _ => return Err(bad_event("start tag or close AutoType", event.clone())),
             }
         }
 
@@ -325,10 +279,7 @@ impl FromXml for AutoTypeAssociation {
     ) -> Result<Self::Parses, XmlParseError> {
         let open_tag = iterator.next().ok_or(XmlParseError::Eof)?;
         if !matches!(open_tag, SimpleXmlEvent::Start(ref tag, _) if tag == "Association") {
-            return Err(XmlParseError::BadEvent {
-                expected: "Open Association tag",
-                event: open_tag,
-            });
+            return Err(bad_event("Open Association tag", open_tag));
         }
 
         let mut out = AutoTypeAssociation::default();
@@ -346,17 +297,13 @@ impl FromXml for AutoTypeAssociation {
                     }
                     _ => {
                         IgnoreSubfield::from_xml(iterator, inner_cipher)?;
+                        // FIXME: this two lines cause error.
                         let sequence = SimpleTag::<Option<String>>::from_xml(iterator, inner_cipher)?.value;
                         out.sequence = sequence.map(|s| decode_xml(&s));
                     }
                 },
                 SimpleXmlEvent::End(name) if name == "Association" => break,
-                _ => {
-                    return Err(XmlParseError::BadEvent {
-                        expected: "start tag or close Association",
-                        event: event.clone(),
-                    })
-                }
+                _ => return Err(bad_event("start tag or close Association", event.clone())),
             }
         }
 
@@ -376,10 +323,7 @@ impl FromXml for History {
     ) -> Result<Self::Parses, XmlParseError> {
         let open_tag = iterator.next().ok_or(XmlParseError::Eof)?;
         if !matches!(open_tag, SimpleXmlEvent::Start(ref tag, _) if tag == "History") {
-            return Err(XmlParseError::BadEvent {
-                expected: "Open History tag",
-                event: open_tag,
-            });
+            return Err(bad_event("Open History tag", open_tag));
         }
 
         let mut entries = Vec::new();
@@ -391,17 +335,10 @@ impl FromXml for History {
                         let entry = Entry::from_xml(iterator, inner_cipher)?;
                         entries.push(entry);
                     }
-                    _ => {
-                        IgnoreSubfield::from_xml(iterator, inner_cipher)?;
-                    }
+                    _ => IgnoreSubfield::from_xml(iterator, inner_cipher)?,
                 },
                 SimpleXmlEvent::End(name) if name == "History" => break,
-                _ => {
-                    return Err(XmlParseError::BadEvent {
-                        expected: "start tag or close History",
-                        event: event.clone(),
-                    })
-                }
+                _ => return Err(bad_event("start tag or close History", event.clone())),
             }
         }
 

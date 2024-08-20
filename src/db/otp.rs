@@ -1,5 +1,4 @@
 use base32;
-use std::fmt::Display;
 use std::time::{Duration, SystemTime, SystemTimeError, UNIX_EPOCH};
 use thiserror::Error;
 use totp_lite::{totp_custom, Sha1, Sha256, Sha512};
@@ -30,7 +29,7 @@ impl std::str::FromStr for TOTPAlgorithm {
     }
 }
 
-impl Display for TOTPAlgorithm {
+impl std::fmt::Display for TOTPAlgorithm {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             TOTPAlgorithm::Sha1 => write!(f, "SHA1"),
@@ -58,7 +57,7 @@ pub struct OTPCode {
     pub period: Duration,
 }
 
-impl Display for OTPCode {
+impl std::fmt::Display for OTPCode {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(
             f,
@@ -144,7 +143,7 @@ impl std::str::FromStr for TOTP {
     }
 }
 
-impl Display for TOTP {
+impl std::fmt::Display for TOTP {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(
             f,

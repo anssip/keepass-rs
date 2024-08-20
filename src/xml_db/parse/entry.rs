@@ -295,12 +295,7 @@ impl FromXml for AutoTypeAssociation {
                         let sequence = SimpleTag::<Option<String>>::from_xml(iterator, inner_cipher)?.value;
                         out.sequence = sequence.map(|s| decode_xml(&s));
                     }
-                    _ => {
-                        IgnoreSubfield::from_xml(iterator, inner_cipher)?;
-                        // FIXME: this two lines cause error.
-                        // let sequence = SimpleTag::<Option<String>>::from_xml(iterator, inner_cipher)?.value;
-                        // out.sequence = sequence.map(|s| decode_xml(&s));
-                    }
+                    _ => IgnoreSubfield::from_xml(iterator, inner_cipher)?,
                 },
                 SimpleXmlEvent::End(name) if name == "Association" => break,
                 _ => return Err(bad_event("start tag or close Association", event.clone())),
